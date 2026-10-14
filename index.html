@@ -291,76 +291,6 @@
       background: rgba(34, 197, 94, 0.15);
       border: 1px solid var(--success);
     }
-    /* ---------- Mute button ---------- */
-    .mute-btn {
-      position: fixed;
-      top: 16px;
-      left: 16px;
-      width: 44px;
-      height: 44px;
-      font-size: 1.2rem;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 50%;
-      cursor: pointer;
-      z-index: 10;
-      transition: border-color 0.15s ease;
-    }
-    .mute-btn:hover { border-color: var(--accent); }
-
-    /* ---------- Voice message ---------- */
-    .voice {
-      background: var(--surface-2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 12px 16px;
-      margin-bottom: 12px;
-    }
-    .voice[hidden] { display: none; }
-    .voice-header {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-bottom: 8px;
-    }
-    .voice-title { font-weight: 700; font-size: 0.95rem; }
-    .parody-label {
-      font-size: 0.75rem;
-      font-weight: 700;
-      color: #fbbf24;
-      background: rgba(251, 191, 36, 0.12);
-      border: 1px solid rgba(251, 191, 36, 0.5);
-      border-radius: 999px;
-      padding: 2px 10px;
-    }
-    .parody-label[hidden] { display: none; }
-    .voice-bars { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; }
-    .voice-bars i {
-      width: 3px;
-      height: 4px;
-      background: var(--accent);
-      border-radius: 2px;
-    }
-    .voice.playing .voice-bars i { animation: bars 0.8s ease-in-out infinite; }
-    .voice.playing .voice-bars i:nth-child(2) { animation-delay: 0.2s; }
-    .voice.playing .voice-bars i:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes bars {
-      0%, 100% { height: 4px; }
-      50% { height: 14px; }
-    }
-    .voice-subtitle {
-      font-size: 1.05rem;
-      font-style: italic;
-    }
-    .voice-subtitle::before { content: "💬 "; font-style: normal; }
-    .voice-status {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-    .voice-status:empty { display: none; }
-
     .source-info {
       display: grid;
       grid-template-columns: auto 1fr;
@@ -429,8 +359,6 @@
   </style>
 </head>
 <body>
-  <button class="mute-btn" id="mute-btn" type="button" aria-pressed="false" aria-label="השתק שמע">🔊</button>
-
   <main class="container">
 
     <!-- Start screen -->
@@ -442,9 +370,7 @@
         <ul class="rules">
           <li>יוצג לכם ציטוט של פוליטיקאי ישראלי, ללא שם.</li>
           <li>בחרו לאיזו מפלגה שייך הדובר מבין ארבע אפשרויות.</li>
-          <li>בסוף המבחן תקבלו את הציון שלכם.</li>
-          <li>ההודעות הקוליות המשעשעות הן פרודיה שנוצרה ב-AI ומסומנות ככאלה. הציטוטים עצמם אמיתיים.</li>
-        </ul>
+          <li>בסוף המבחן תקבלו את הציון שלכם.</li>        </ul>
         <p class="length-label">כמה שאלות?</p>
         <div class="length-options" id="length-options">
           <button class="length-btn" data-count="1">1</button>
@@ -480,15 +406,6 @@
         <div class="answer-row">
           <span>התשובה הנכונה:</span>
           <span class="badge" id="correct-badge"></span>
-        </div>
-        <div class="voice" id="voice" hidden>
-          <div class="voice-header">
-            <span class="voice-bars" aria-hidden="true"><i></i><i></i><i></i></span>
-            <span class="voice-title">הודעה קולית</span>
-            <span class="parody-label" id="parody-label">🤖 פרודיה שנוצרה ב-AI · לא אמירה אמיתית</span>
-          </div>
-          <p class="voice-subtitle" id="voice-subtitle"></p>
-          <p class="voice-status" id="voice-status" aria-live="polite"></p>
         </div>
         <dl class="source-info">
           <dt>דובר/ת</dt>
@@ -634,97 +551,6 @@
     let score = 0;
     let switching = false;
 
-    // ---------- Voice messages ----------
-    // One clip per speaker, keyed by the `speaker` field in questionPool.
-    // These lines are invented jokes, so they must only be voiced with a
-    // licensed synthetic voice and keep synthetic: true (shows the parody label).
-    // A clip from a real recording you have rights to: synthetic: false and the
-    // subtitle must be the exact words spoken. See audio/README.md.
-    const AUDIO_DIR = "audio/";
-    const VOICE_CLIPS = {
-      "בנימין נתניהו": { file: "netanyahu.mp3", synthetic: true, subtitle: "ניחשתם נכון? בזכותי. ניחשתם לא נכון? אשמת התקשורת." },
-      "יאיר לפיד": { file: "lapid.mp3", synthetic: true, subtitle: "אני יודע בדיוק מה אתם חושבים עכשיו. כתבתי על זה פעם טור." },
-      "בני גנץ": { file: "gantz.mp3", synthetic: true, subtitle: "שקלתי, התייעצתי, התלבטתי... והחלטתי שזו הייתה שאלה מצוינת." },
-      "איתמר בן גביר": { file: "ben-gvir.mp3", synthetic: true, subtitle: "מה, באמת לא זיהיתם? אני הכי מוכר בארץ!" },
-      "יאיר גולן": { file: "golan.mp3", synthetic: true, subtitle: "גם בחידון אני ממליץ: לא לוותר, ולענות נכון בפעם הבאה." },
-      "ירון זליכה": { file: "zelekha.mp3", synthetic: true, subtitle: "בדקתי את המספרים: הניקוד שלכם יקר בארבעים אחוז מבאירופה." },
-      "עופר וינטר": { file: "winter.mp3", synthetic: true, subtitle: "מי שעונה נכון, מקבל. מי שעונה נכון הרבה, מקבל הרבה יותר." },
-      "נפתלי בנט": { file: "bennett.mp3", synthetic: true, subtitle: "בדיוק כמו בהייטק: מנסים, נכשלים מהר, ועוברים לשאלה הבאה." },
-      "יריב לוין": { file: "levin.mp3", synthetic: true, subtitle: "התשובה שלכם התקבלה. ערעור לא יתקבל." },
-      "יועז הנדל": { file: "hendel.mp3", synthetic: true, subtitle: "במילואים למדנו: גם אם טעית, ממשיכים קדימה." }
-    };
-
-    const MUTE_KEY = "quiz-muted";
-    let muted = false;
-    try { muted = localStorage.getItem(MUTE_KEY) === "true"; } catch (e) {}
-    let currentAudio = null;
-
-    function setVoiceStatus(text) {
-      $("voice-status").textContent = text;
-    }
-
-    function stopVoice() {
-      if (currentAudio) currentAudio.pause();
-      currentAudio = null;
-      $("voice").classList.remove("playing");
-    }
-
-    // Subtitles are always shown; audio is an enhancement on top of them
-    function playVoice(speaker) {
-      stopVoice();
-      const clip = VOICE_CLIPS[speaker];
-      const box = $("voice");
-      if (!clip) {
-        box.hidden = true;
-        return;
-      }
-      box.hidden = false;
-      $("voice-subtitle").textContent = clip.subtitle;
-      $("parody-label").hidden = !clip.synthetic;
-      setVoiceStatus(muted ? "השמע מושתק · מוצגות כתוביות בלבד" : "טוען שמע…");
-
-      const audio = new Audio(AUDIO_DIR + clip.file);
-      currentAudio = audio;
-      const isCurrent = () => audio === currentAudio;
-
-      audio.addEventListener("playing", () => {
-        if (!isCurrent()) return;
-        box.classList.add("playing");
-        setVoiceStatus("");
-      });
-      audio.addEventListener("pause", () => isCurrent() && box.classList.remove("playing"));
-      audio.addEventListener("ended", () => isCurrent() && box.classList.remove("playing"));
-      audio.addEventListener("error", () => {
-        if (!isCurrent()) return;
-        box.classList.remove("playing");
-        setVoiceStatus("🔇 קובץ השמע אינו זמין · מוצגות כתוביות בלבד");
-      });
-
-      if (!muted) {
-        audio.play().catch(() => {
-          if (isCurrent() && !audio.error) setVoiceStatus("לא ניתן לנגן שמע בדפדפן זה · מוצגות כתוביות בלבד");
-        });
-      }
-    }
-
-    function setMuted(value) {
-      muted = value;
-      try { localStorage.setItem(MUTE_KEY, String(value)); } catch (e) {}
-      const btn = $("mute-btn");
-      btn.textContent = value ? "🔇" : "🔊";
-      btn.setAttribute("aria-pressed", String(value));
-      btn.setAttribute("aria-label", value ? "בטל השתקה" : "השתק שמע");
-
-      if (!currentAudio || currentAudio.error) return;
-      if (value) {
-        currentAudio.pause();
-        setVoiceStatus("השמע מושתק · מוצגות כתוביות בלבד");
-      } else if (!currentAudio.ended) {
-        setVoiceStatus("");
-        currentAudio.play().catch(() => {});
-      }
-    }
-
     // Fisher-Yates shuffle on a copy
     function shuffle(arr) {
       const a = [...arr];
@@ -832,7 +658,6 @@
       $("source-outlet").textContent = `${q.outlet} · ${q.date}`;
       $("explanation").textContent = q.context;
       $("source-link").href = q.url;
-      playVoice(q.speaker);
       $("next-btn").textContent =
         current === questions.length - 1 ? "לתוצאות" : "לשאלה הבאה";
       $("feedback").classList.add("show");
@@ -842,7 +667,6 @@
     }
 
     function nextQuestion() {
-      stopVoice();
       current++;
       if (current < questions.length) {
         renderQuestion();
@@ -878,8 +702,6 @@
     });
 
     $("start-btn").addEventListener("click", startQuiz);
-    $("mute-btn").addEventListener("click", () => setMuted(!muted));
-    setMuted(muted);
     $("next-btn").addEventListener("click", nextQuestion);
     $("restart-btn").addEventListener("click", () => showScreen("start-screen"));
   </script>
