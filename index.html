@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מבחן עיוור פוליטי</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg-glow: #1a2233;
+      --surface: #161b22;
+      --surface-2: #1f2630;
+      --border: #2a313c;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --accent: #4f8cff;
+      --accent-2: #8b5cf6;
+      --success: #22c55e;
+      --error: #ef4444;
+      --radius: 16px;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: "Heebo", "Segoe UI", Arial, sans-serif;
+      background: radial-gradient(ellipse at top, var(--bg-glow), var(--bg) 70%) fixed;
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 16px;
+      line-height: 1.6;
+    }
+
+    .container { width: 100%; max-width: 640px; }
+
+    /* ---------- Screens ---------- */
+    .screen { display: none; animation: fadeIn 0.35s ease; }
+    .screen.active { display: block; }
+    .screen.fade-out {
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 0.25s ease, transform 0.25s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px;
+    }
+
+    /* ---------- Buttons ---------- */
+    .btn-primary {
+      display: block;
+      width: 100%;
+      padding: 16px;
+      font-family: inherit;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(79, 140, 255, 0.35);
+    }
+    .btn-primary:active { transform: translateY(0); }
+
+    /* ---------- Start screen ---------- */
+    .logo {
+      font-size: 3rem;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      text-align: center;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, var(--text), var(--accent));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .subtitle {
+      text-align: center;
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+    .rules {
+      list-style: none;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px 24px;
+      margin-bottom: 28px;
+    }
+    .rules li {
+      position: relative;
+      padding-right: 28px;
+      margin-bottom: 10px;
+    }
+    .rules li:last-child { margin-bottom: 0; }
+    .rules li::before {
+      content: "◆";
+      position: absolute;
+      right: 0;
+      color: var(--accent);
+      font-size: 0.8rem;
+      top: 4px;
+    }
+
+    /* ---------- Length selector ---------- */
+    .length-label {
+      text-align: center;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .length-options {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-bottom: 28px;
+    }
+    .length-btn {
+      padding: 12px 0;
+      font-family: inherit;
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+    }
+    .length-btn:hover { border-color: var(--accent); color: var(--text); }
+    .length-btn.active {
+      color: #fff;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border-color: transparent;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(79, 140, 255, 0.3);
+    }
+
+    /* ---------- Quiz screen ---------- */
+    .steps {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+      margin: -12px 0 24px;
+    }
+    .step {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      transition: background 0.2s ease, transform 0.2s ease;
+    }
+    .step.current { border-color: var(--accent); transform: scale(1.3); }
+    .step.correct { background: var(--success); border-color: var(--success); }
+    .step.wrong { background: var(--error); border-color: var(--error); }
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+    .progress-track {
+      height: 8px;
+      background: var(--surface-2);
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 24px;
+    }
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      border-radius: 999px;
+      transition: width 0.4s ease;
+    }
+
+    .quote-card { margin-bottom: 24px; position: relative; }
+    .quote-mark {
+      font-size: 4rem;
+      line-height: 1;
+      color: var(--accent);
+      opacity: 0.3;
+      font-family: Georgia, serif;
+      position: absolute;
+      top: 12px;
+      right: 20px;
+    }
+    .quote-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      text-align: center;
+    }
+    .quote-text {
+      font-size: 1.35rem;
+      font-weight: 500;
+      text-align: center;
+      padding: 12px 8px;
+    }
+
+    .options {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .option-btn {
+      padding: 18px 12px;
+      font-family: inherit;
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    }
+    .option-btn:hover:not(:disabled) {
+      background: var(--surface-2);
+      border-color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .option-btn:disabled { cursor: default; opacity: 0.5; }
+    .option-btn.correct {
+      opacity: 1;
+      background: rgba(34, 197, 94, 0.15);
+      border-color: var(--success);
+      color: var(--success);
+    }
+    .option-btn.wrong {
+      opacity: 1;
+      background: rgba(239, 68, 68, 0.15);
+      border-color: var(--error);
+      color: var(--error);
+    }
+
+    /* ---------- Feedback card ---------- */
+    .feedback {
+      display: none;
+      margin-top: 20px;
+      animation: fadeIn 0.3s ease;
+    }
+    .feedback.show { display: block; }
+    .feedback-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+    }
+    .feedback-title.correct { color: var(--success); }
+    .feedback-title.wrong { color: var(--error); }
+    .answer-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      color: var(--text-muted);
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 14px;
+      border-radius: 999px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: var(--success);
+      background: rgba(34, 197, 94, 0.15);
+      border: 1px solid var(--success);
+    }
+    .explanation {
+      color: var(--text);
+      margin-bottom: 20px;
+    }
+
+    /* ---------- Results screen ---------- */
+    .results-card { text-align: center; }
+    .results-card h2 {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 24px;
+    }
+    .score-circle {
+      width: 160px;
+      height: 160px;
+      margin: 0 auto 20px;
+      border-radius: 50%;
+      background: conic-gradient(var(--accent) var(--pct, 0%), var(--surface-2) 0);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .score-inner {
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: var(--surface);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .score-value { font-size: 2.2rem; font-weight: 800; }
+    .score-label { font-size: 0.85rem; color: var(--text-muted); }
+    .score-message {
+      color: var(--text-muted);
+      margin-bottom: 28px;
+    }
+
+    @media (max-width: 480px) {
+      .card { padding: 24px 20px; }
+      h1 { font-size: 1.8rem; }
+      .quote-text { font-size: 1.15rem; }
+      .options { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+
+    <!-- Start screen -->
+    <section id="start-screen" class="screen active">
+      <div class="card">
+        <div class="logo">🗳️</div>
+        <h1>מבחן עיוור פוליטי</h1>
+        <p class="subtitle">האם תצליחו לזהות מי אמר את זה?</p>
+        <ul class="rules">
+          <li>יוצג לכם ציטוט של פוליטיקאי ישראלי, ללא שם.</li>
+          <li>בחרו לאיזו מפלגה שייך הדובר מבין ארבע אפשרויות.</li>
+          <li>בסוף המבחן תקבלו את הציון שלכם.</li>
+        </ul>
+        <p class="length-label">כמה שאלות?</p>
+        <div class="length-options" id="length-options">
+          <button class="length-btn" data-count="1">1</button>
+          <button class="length-btn" data-count="3">3</button>
+          <button class="length-btn active" data-count="5">5</button>
+          <button class="length-btn" data-count="10">10</button>
+        </div>
+        <button class="btn-primary" id="start-btn">התחל במבחן</button>
+      </div>
+    </section>
+
+    <!-- Quiz screen -->
+    <section id="quiz-screen" class="screen">
+      <div class="progress-header">
+        <span id="progress-text">שאלה 1 מתוך 1</span>
+        <span id="score-text">ניקוד: 0</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" id="progress-fill"></div>
+      </div>
+      <div class="steps" id="steps"></div>
+
+      <div class="card quote-card">
+        <span class="quote-mark">”</span>
+        <p class="quote-label">מי אמר את זה?</p>
+        <p class="quote-text" id="quote-text"></p>
+      </div>
+
+      <div class="options" id="options"></div>
+
+      <div class="card feedback" id="feedback">
+        <p class="feedback-title" id="feedback-title"></p>
+        <div class="answer-row">
+          <span>התשובה הנכונה:</span>
+          <span class="badge" id="correct-badge"></span>
+        </div>
+        <p class="explanation" id="explanation"></p>
+        <button class="btn-primary" id="next-btn">לשאלה הבאה</button>
+      </div>
+    </section>
+
+    <!-- Results screen -->
+    <section id="results-screen" class="screen">
+      <div class="card results-card">
+        <h2>סיימתם!</h2>
+        <div class="score-circle" id="score-circle">
+          <div class="score-inner">
+            <span class="score-value" id="final-score">0/0</span>
+            <span class="score-label">תשובות נכונות</span>
+          </div>
+        </div>
+        <p class="score-message" id="score-message"></p>
+        <button class="btn-primary" id="restart-btn">שחק שוב</button>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // Dummy question pool (placeholders until real content is added)
+    const PARTIES = ["הליכוד", "יש עתיד", "המחנה הממלכתי", "ש״ס"];
+    const questionPool = Array.from({ length: 10 }, (_, i) => ({
+      quote: `זהו ציטוט לדוגמה מספר ${i + 1} שיוחלף בהמשך בציטוט אמיתי.`,
+      options: PARTIES,
+      answer: PARTIES[i % PARTIES.length],
+      explanation: "הסבר לדוגמה: כאן יופיע הקשר קצר על הציטוט ועל מי שאמר אותו."
+    }));
+
+    const FADE_MS = 250;
+    let selectedCount = 5;
+    let questions = [];
+    let current = 0;
+    let score = 0;
+    let switching = false;
+
+    // Fisher-Yates shuffle on a copy, then take the first n
+    function sampleQuestions(n) {
+      const pool = [...questionPool];
+      for (let i = pool.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [pool[i], pool[j]] = [pool[j], pool[i]];
+      }
+      return pool.slice(0, Math.min(n, pool.length));
+    }
+
+    function renderSteps() {
+      $("steps").innerHTML = questions.map(() => '<span class="step"></span>').join("");
+    }
+
+    function updateSteps() {
+      document.querySelectorAll(".step").forEach((dot, i) => {
+        dot.classList.toggle("current", i === current);
+      });
+    }
+
+    const $ = (id) => document.getElementById(id);
+
+    // Fade out the active screen, then fade in the target screen
+    function showScreen(id) {
+      if (switching) return;
+      const from = document.querySelector(".screen.active");
+      const to = $(id);
+      if (from === to) return;
+      switching = true;
+      from.classList.add("fade-out");
+      setTimeout(() => {
+        from.classList.remove("active", "fade-out");
+        to.classList.add("active");
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        switching = false;
+      }, FADE_MS);
+    }
+
+    function updateProgress(answered) {
+      $("progress-text").textContent = `שאלה ${current + 1} מתוך ${questions.length}`;
+      $("score-text").textContent = `ניקוד: ${score}`;
+      $("progress-fill").style.width = `${(answered / questions.length) * 100}%`;
+    }
+
+    function renderQuestion() {
+      const q = questions[current];
+      updateProgress(current);
+      updateSteps();
+      $("quote-text").textContent = q.quote;
+      $("feedback").classList.remove("show");
+
+      const options = $("options");
+      options.innerHTML = "";
+      q.options.forEach((party) => {
+        const btn = document.createElement("button");
+        btn.className = "option-btn";
+        btn.textContent = party;
+        btn.addEventListener("click", () => selectAnswer(btn, party));
+        options.appendChild(btn);
+      });
+    }
+
+    function selectAnswer(selectedBtn, party) {
+      const q = questions[current];
+      const isCorrect = party === q.answer;
+      if (isCorrect) score++;
+
+      document.querySelectorAll(".option-btn").forEach((btn) => {
+        btn.disabled = true;
+        if (btn.textContent === q.answer) btn.classList.add("correct");
+      });
+      if (!isCorrect) selectedBtn.classList.add("wrong");
+      document.querySelectorAll(".step")[current].classList.add(isCorrect ? "correct" : "wrong");
+
+      const title = $("feedback-title");
+      title.textContent = isCorrect ? "✓ תשובה נכונה!" : "✗ טעות";
+      title.className = `feedback-title ${isCorrect ? "correct" : "wrong"}`;
+      $("correct-badge").textContent = q.answer;
+      $("explanation").textContent = q.explanation;
+      $("next-btn").textContent =
+        current === questions.length - 1 ? "לתוצאות" : "לשאלה הבאה";
+      $("feedback").classList.add("show");
+
+      updateProgress(current + 1);
+      $("feedback").scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
+
+    function nextQuestion() {
+      current++;
+      if (current < questions.length) {
+        renderQuestion();
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } else {
+        showResults();
+      }
+    }
+
+    function showResults() {
+      const pct = Math.round((score / questions.length) * 100);
+      $("final-score").textContent = `${score}/${questions.length}`;
+      $("score-circle").style.setProperty("--pct", `${pct}%`);
+      $("score-message").textContent = `קלעתם ${pct}% מהתשובות.`;
+      showScreen("results-screen");
+    }
+
+    function startQuiz() {
+      questions = sampleQuestions(selectedCount);
+      current = 0;
+      score = 0;
+      renderSteps();
+      renderQuestion();
+      showScreen("quiz-screen");
+    }
+
+    document.querySelectorAll(".length-btn").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".length-btn").forEach((b) => b.classList.remove("active"));
+        btn.classList.add("active");
+        selectedCount = Number(btn.dataset.count);
+      });
+    });
+
+    $("start-btn").addEventListener("click", startQuiz);
+    $("next-btn").addEventListener("click", nextQuestion);
+    $("restart-btn").addEventListener("click", () => showScreen("start-screen"));
+  </script>
+</body>
+</html>
