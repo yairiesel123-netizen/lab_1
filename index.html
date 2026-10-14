@@ -291,10 +291,30 @@
       background: rgba(34, 197, 94, 0.15);
       border: 1px solid var(--success);
     }
+    .source-info {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 6px 14px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+    }
+    .source-info dt { color: var(--text-muted); font-size: 0.9rem; }
+    .source-info dd { font-weight: 600; }
     .explanation {
       color: var(--text);
+      margin-bottom: 8px;
+    }
+    .source-link {
+      display: inline-block;
+      color: var(--accent);
+      font-size: 0.9rem;
+      text-decoration: none;
       margin-bottom: 20px;
     }
+    .source-link:hover { text-decoration: underline; }
 
     /* ---------- Results screen ---------- */
     .results-card { text-align: center; }
@@ -388,7 +408,14 @@
           <span>התשובה הנכונה:</span>
           <span class="badge" id="correct-badge"></span>
         </div>
+        <dl class="source-info">
+          <dt>דובר/ת</dt>
+          <dd id="source-speaker"></dd>
+          <dt>מקור</dt>
+          <dd id="source-outlet"></dd>
+        </dl>
         <p class="explanation" id="explanation"></p>
+        <a class="source-link" id="source-link" target="_blank" rel="noopener noreferrer">לכתבה המקורית ↗</a>
         <button class="btn-primary" id="next-btn">לשאלה הבאה</button>
       </div>
     </section>
@@ -411,14 +438,110 @@
   </main>
 
   <script>
-    // Dummy question pool (placeholders until real content is added)
-    const PARTIES = ["הליכוד", "יש עתיד", "המחנה הממלכתי", "ש״ס"];
-    const questionPool = Array.from({ length: 10 }, (_, i) => ({
-      quote: `זהו ציטוט לדוגמה מספר ${i + 1} שיוחלף בהמשך בציטוט אמיתי.`,
-      options: PARTIES,
-      answer: PARTIES[i % PARTIES.length],
-      explanation: "הסבר לדוגמה: כאן יופיע הקשר קצר על הציטוט ועל מי שאמר אותו."
-    }));
+    // Party labels as running in the 2026 elections (also used as distractors)
+    const PARTIES = [
+      "הליכוד",
+      "ביחד (בנט-לפיד)",
+      "כחול לבן",
+      "עוצמה יהודית",
+      "הדמוקרטים",
+      "המילואימניקים והכלכלית",
+      "עמך ישראל"
+    ];
+
+    // Real quotes, each verified verbatim against the linked source page
+    const questionPool = [
+      {
+        quote: "מי שישלוט בשטח הזה וישאר בו זה צבא ההגנה לישראל. לא יהיה פה צבא ערבי ממערב לירדן",
+        party: "הליכוד",
+        speaker: "בנימין נתניהו",
+        outlet: "ערוץ 14, \"הפטריוטים\"",
+        date: "13.10.2026",
+        url: "https://www.kikar.co.il/political-news/netanyahu-iran-elections-interference-warning",
+        context: "נאמר בדיון על עתיד השליטה הביטחונית ביהודה ושומרון."
+      },
+      {
+        quote: "לאחר הבחירות נקים ממשלה לאומית רחבה שתעביר מיד חוק גיוס מלא שיענה על צרכי צה\"ל",
+        party: "הליכוד",
+        speaker: "בנימין נתניהו",
+        outlet: "פגישה סגורה, כפי שדווח בחדשות 12 (עמית סגל) ובוואלה",
+        date: "2.8.2026",
+        url: "https://www.walla.co.il/news/politics/3857882",
+        context: "נאמר לאחר כישלון החוק הזמני לגיוס חרדים, על תוכנית הגיוס שאחרי הבחירות."
+      },
+      {
+        quote: "ללכת למהלך כמו גיוס של החרדים לצה\"ל - אתה לא רוצה להשעין אותו על הקולות של המפלגות הערביות",
+        party: "ביחד (בנט-לפיד)",
+        speaker: "יאיר לפיד",
+        outlet: "חדשות 12, \"פגוש את העיתונות\"",
+        date: "4.7.2026",
+        url: "https://www.mako.co.il/news-politics/2026_q3/Article-69eafccac7d2f91027.htm",
+        context: "תשובה לשאלה אם ממשלה שתעביר גיוס חרדים תישען על המפלגות הערביות."
+      },
+      {
+        quote: "רק ממשלת אחדות ציונית עם שני הגושים תוכל להתמודד עם איראן, עם הגיוס ועם איחוי הקרע בחברה",
+        party: "כחול לבן",
+        speaker: "בני גנץ",
+        outlet: "ynet",
+        date: "אוקטובר 2026",
+        url: "https://www.ynet.co.il/news/elections2026/article/sjkxknvx5jzx",
+        context: "נאמר בדיון על הרכב הממשלה שתקום אחרי הבחירות."
+      },
+      {
+        quote: "בשום מצב אסור להסכים להגבלת חופש הפעולה של ישראל בלבנון או לנסיגה שתסכן את תושבי הצפון",
+        party: "כחול לבן",
+        speaker: "בני גנץ",
+        outlet: "הודעה כתובה, כפי שדווחה ב-JDN ובסרוגים",
+        date: "15.6.2026",
+        url: "https://www.jdn.co.il/news/2673145/",
+        context: "תגובה להסכם המסתמן עם איראן והשלכותיו על הזירה בלבנון."
+      },
+      {
+        quote: "אני רוצה יותר - להקריס את הרשות ולכבוש ולהתיישב בכל רצועת עזה ולעודד הגירה",
+        party: "עוצמה יהודית",
+        speaker: "איתמר בן גביר",
+        outlet: "כנס הבחירות של עיתון \"הדור\", כפי שדווח בערוץ 7",
+        date: "11.10.2026",
+        url: "https://www.inn.co.il/news/708248",
+        context: "נאמר על היעדים לרצועת עזה אחרי הבחירות."
+      },
+      {
+        quote: "אחרי שנתיים לחימה ברצועת עזה, ממשלת ישראל מאפשרת את בניית כוחו של חמאס מחדש ואפשרה לקטאר ולטורקיה להיכנס לרצועה.",
+        party: "הדמוקרטים",
+        speaker: "יאיר גולן",
+        outlet: "חדשות 12, \"שבת בחמש\"",
+        date: "10.10.2026",
+        url: "https://www.mako.co.il/news-politics/2026_q4/Article-c1fd3a9807621a1026.htm",
+        context: "נאמר בביקורת על ניהול המלחמה, בריאיון שעסק גם באיראן."
+      },
+      {
+        quote: "יוקר המחיה בישראל הוא בין 35 ל-40 אחוזים יותר מיוקר המחיה באירופה המערבית ובארצות הברית. ואני מתחייב בתוך שנתיים להוריד את הפער הזה בלפחות רבע.",
+        party: "המילואימניקים והכלכלית",
+        speaker: "ירון זליכה",
+        outlet: "ערוץ 14, ריאיון מיוחד",
+        date: "13.8.2026",
+        url: "https://www.c14.co.il/article/1659414",
+        context: "תשובה לשאלה בכמה יוריד את יוקר המחיה אם יכהן כשר האוצר."
+      },
+      {
+        quote: "נתחיל בביטול המכסים, ביטול כל מכסות הייבוא, איסור על מונופולים בייצור המקומי להשתלט על ייבוא ולחסום אותו, ביטול הקרטלים בייבוא ברישיון",
+        party: "המילואימניקים והכלכלית",
+        speaker: "ירון זליכה",
+        outlet: "רדיו 103FM, כפי שדווח במעריב",
+        date: "16.9.2026",
+        url: "https://www.maariv.co.il/news/politics/article-1368014",
+        context: "חלק מהתוכנית שהציג למאבק ביוקר המחיה."
+      },
+      {
+        quote: "מי שמשרת במדינה יקבל, מי שמשרת יותר ובקרבי, יקבל הרבה יותר. ומי שלא משרת את המדינה, לא יהיה זכאי לאקסטרות.",
+        party: "עמך ישראל",
+        speaker: "עופר וינטר",
+        outlet: "חדשות 12, \"חדשות סוף השבוע\" (ריאיון עם דנה וייס)",
+        date: "3.10.2026",
+        url: "https://www.mako.co.il/news-military/2026_q4/Article-e3a58ce83f201a1027.htm",
+        context: "תשובה לשאלה במה תהיה שונה הצעתו לחוק הגיוס."
+      }
+    ];
 
     const FADE_MS = 250;
     let selectedCount = 5;
@@ -427,14 +550,24 @@
     let score = 0;
     let switching = false;
 
-    // Fisher-Yates shuffle on a copy, then take the first n
-    function sampleQuestions(n) {
-      const pool = [...questionPool];
-      for (let i = pool.length - 1; i > 0; i--) {
+    // Fisher-Yates shuffle on a copy
+    function shuffle(arr) {
+      const a = [...arr];
+      for (let i = a.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
-        [pool[i], pool[j]] = [pool[j], pool[i]];
+        [a[i], a[j]] = [a[j], a[i]];
       }
-      return pool.slice(0, Math.min(n, pool.length));
+      return a;
+    }
+
+    function sampleQuestions(n) {
+      return shuffle(questionPool).slice(0, Math.min(n, questionPool.length));
+    }
+
+    // Correct party + 3 random distractors, in random order
+    function buildOptions(answer) {
+      const distractors = shuffle(PARTIES.filter((p) => p !== answer)).slice(0, 3);
+      return shuffle([answer, ...distractors]);
     }
 
     function renderSteps() {
@@ -480,7 +613,7 @@
 
       const options = $("options");
       options.innerHTML = "";
-      q.options.forEach((party) => {
+      buildOptions(q.party).forEach((party) => {
         const btn = document.createElement("button");
         btn.className = "option-btn";
         btn.textContent = party;
@@ -491,12 +624,12 @@
 
     function selectAnswer(selectedBtn, party) {
       const q = questions[current];
-      const isCorrect = party === q.answer;
+      const isCorrect = party === q.party;
       if (isCorrect) score++;
 
       document.querySelectorAll(".option-btn").forEach((btn) => {
         btn.disabled = true;
-        if (btn.textContent === q.answer) btn.classList.add("correct");
+        if (btn.textContent === q.party) btn.classList.add("correct");
       });
       if (!isCorrect) selectedBtn.classList.add("wrong");
       document.querySelectorAll(".step")[current].classList.add(isCorrect ? "correct" : "wrong");
@@ -504,8 +637,11 @@
       const title = $("feedback-title");
       title.textContent = isCorrect ? "✓ תשובה נכונה!" : "✗ טעות";
       title.className = `feedback-title ${isCorrect ? "correct" : "wrong"}`;
-      $("correct-badge").textContent = q.answer;
-      $("explanation").textContent = q.explanation;
+      $("correct-badge").textContent = q.party;
+      $("source-speaker").textContent = q.speaker;
+      $("source-outlet").textContent = `${q.outlet} · ${q.date}`;
+      $("explanation").textContent = q.context;
+      $("source-link").href = q.url;
       $("next-btn").textContent =
         current === questions.length - 1 ? "לתוצאות" : "לשאלה הבאה";
       $("feedback").classList.add("show");
